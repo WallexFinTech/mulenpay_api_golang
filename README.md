@@ -1,69 +1,78 @@
-<h1>MulenPay API Client на языке Go</h1>
-<h2>Описание</h2>
-<p>Асинхронный Go-клиент для работы с API MulenPay. Подходит для управления платежами и подписками.</p>
+# MulenPay API Client на языке Go
 
-<h2>импортировать<h2>
+## Описание
+Асинхронный Go-клиент для работы с API MulenPay. Подходит для управления платежами и подписками.
+
+## Установка
 ```bash
-go get https://github.com/WallexFinTech/mulenpay_api_golang
+go get github.com/WallexFinTech/mulenpay_api_golang
 ```
-<h2>Настройка и использование клиента </h2>
-<h3>Для начала работы создайте client.</h3>
+
+## Настройка и использование клиента
+Для начала работы создайте клиента:
 ```bash
 mpClient := mulenpaygosdk.NewMPClient(
-		apiUrl,
-		apiKey,
-		sekretKey,
-		requestTimeoutDuration,
-	)
+	apiUrl,
+	apiKey,
+	sekretKey,
+	requestTimeoutDuration,
+)
 ```
-
-<h2>Пример использования.</h2>
-<p>Создание платежа</p>
+## Пример использования
+Создание платежа
 ```bash
-	 data := &mulenpaygosdk.PaymentReq{
+data := &mulenpaygosdk.PaymentReq{
+	Currency:    "3",
+	Amount:      "1000.50",
+	Uuid:        "invoice_123",
+	ShopId:      21,
+	Description: "Покупка булочек",
+}
 
-	 	Currency:    "3",
-	 	Amount:      "1000.50",
-	 	Uuid:        "invoice_123",
-	 	ShopId:      21,
-	 	Description: "Покупка булочек",
-	 }
-
-	res, err := mpClient.CreatePayment(data)
+res, err := mpClient.CreatePayment(data)
 ```
-    <p>Где res результат и если ошибка то err </p>
+Где res — результат, а если возникла ошибка, то она будет в err.
 
-<p>Получение списка платежей</p>
+## Получение списка платежей
 ```bash
-res, err := mpClient.GetAllSubscription()
+res, err := mpClient.GetAllPayments()
 ```
 
-<p>Получение платежа по ID</p>
+Получение платежа по ID
 ```bash
 res, err := mpClient.GetPayment(id)
 ```
-Где id string
+Где id — строка.
 
-<p>Подтверждение платежа</p>
+Подтверждение платежа
 ```bash
 res, err := mpClient.ConfirmPayment(id)
 ```
-<p>Отмена платежа</p>
+
+Отмена платежа
 ```bash
 res, err := mpClient.CancelPayment(id)
 ```
-<p>Возврат платежа</p>
+
+Возврат платежа
 ```bash
 res, err := mpClient.RefundPayment(id)
 ```
-<h2>Работа с подписками<h2>
-<p>Получение списка подписок</p>
+
+## Работа с подписками
+Получение списка подписок
 ```bash
-	res, err := mpClient.GetAllPayments()
+res, err := mpClient.GetAllSubscriptions()
 ```
-<p>Удаление подписки по ID</p>
+
+Удаление подписки по ID
 ```bash
 res, err := mpClient.CancelSubscription(id)
 ```
-<p>Требования</p>
-<p>go 1.23</p>
+
+## Требования
+Go 1.23+
+
+
+
+
