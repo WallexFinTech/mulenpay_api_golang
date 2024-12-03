@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/http/httputil"
 	"strconv"
 	"time"
 )
@@ -36,6 +37,7 @@ func (c *MulenpayClient) CreatePayment(data *PaymentReq) (*PaymentRes, *ErrorRes
 		status, _ := strconv.Atoi(res.Status)
 		return nil, &ErrorResponse{Status: status, Error: err.Error()}
 	}
+	defer res.Body.Close()
 	var output PaymentRes
 	err = json.NewDecoder(res.Body).Decode(&output)
 	if err != nil {
@@ -50,10 +52,12 @@ func (c *MulenpayClient) GetAllPayments() (*AllPaymentsData, *ErrorResponse) {
 	url := c.baseApi + "/payments"
 	req, _ := http.NewRequest(http.MethodGet, url, nil)
 	res, err := c.sendRequest(req)
+
 	if err != nil {
 		status, _ := strconv.Atoi(res.Status)
 		return nil, &ErrorResponse{Status: status, Error: err.Error()}
 	}
+	defer res.Body.Close()
 	var output AllPaymentsData
 	err = json.NewDecoder(res.Body).Decode(&output)
 	if err != nil {
@@ -74,7 +78,28 @@ func (c *MulenpayClient) GetPayment(id string) (*PaymentData, *ErrorResponse) {
 		status, _ := strconv.Atoi(res.Status)
 		return nil, &ErrorResponse{Status: status, Error: err.Error()}
 	}
+	defer res.Body.Close()
 	var output PaymentData
+	err = json.NewDecoder(res.Body).Decode(&output)
+	if err != nil {
+		status, _ := strconv.Atoi(res.Status)
+		return nil, &ErrorResponse{Status: status, Error: err.Error()}
+	}
+
+	return &output, nil
+}
+func (c *MulenpayClient) GetReceipt(id string) (*ReceiptData, *ErrorResponse) {
+	url := c.baseApi + "/payments/" + id + "/receipt"
+
+	req, _ := http.NewRequest(http.MethodGet, url, nil)
+
+	res, err := c.sendRequest(req)
+	if err != nil {
+		status, _ := strconv.Atoi(res.Status)
+		return nil, &ErrorResponse{Status: status, Error: err.Error()}
+	}
+	defer res.Body.Close()
+	var output ReceiptData
 	err = json.NewDecoder(res.Body).Decode(&output)
 	if err != nil {
 		status, _ := strconv.Atoi(res.Status)
@@ -92,6 +117,7 @@ func (c *MulenpayClient) ConfirmPayment(id string) (*SuccessResponse, *ErrorResp
 		status, _ := strconv.Atoi(res.Status)
 		return nil, &ErrorResponse{Status: status, Error: err.Error()}
 	}
+	defer res.Body.Close()
 	var output SuccessResponse
 	err = json.NewDecoder(res.Body).Decode(&output)
 	if err != nil {
@@ -109,6 +135,7 @@ func (c *MulenpayClient) CancelPayment(id string) (*SuccessResponse, *ErrorRespo
 		status, _ := strconv.Atoi(res.Status)
 		return nil, &ErrorResponse{Status: status, Error: err.Error()}
 	}
+	defer res.Body.Close()
 	var output SuccessResponse
 	err = json.NewDecoder(res.Body).Decode(&output)
 	if err != nil {
@@ -126,6 +153,7 @@ func (c *MulenpayClient) RefundPayment(id string) (*SuccessResponse, *ErrorRespo
 		status, _ := strconv.Atoi(res.Status)
 		return nil, &ErrorResponse{Status: status, Error: err.Error()}
 	}
+	defer res.Body.Close()
 	var output SuccessResponse
 	err = json.NewDecoder(res.Body).Decode(&output)
 	if err != nil {
@@ -144,6 +172,7 @@ func (c *MulenpayClient) GetAllSubscription() (*AllSubscribtionData, *ErrorRespo
 		status, _ := strconv.Atoi(res.Status)
 		return nil, &ErrorResponse{Status: status, Error: err.Error()}
 	}
+	defer res.Body.Close()
 	var output AllSubscribtionData
 	err = json.NewDecoder(res.Body).Decode(&output)
 	if err != nil {
@@ -162,6 +191,7 @@ func (c *MulenpayClient) CancelSubscription(id string) (*SuccessResponse, *Error
 		status, _ := strconv.Atoi(res.Status)
 		return nil, &ErrorResponse{Status: status, Error: err.Error()}
 	}
+	defer res.Body.Close()
 	var output SuccessResponse
 	err = json.NewDecoder(res.Body).Decode(&output)
 	if err != nil {
@@ -177,7 +207,6 @@ func (c *MulenpayClient) sendRequest(req *http.Request) (*http.Response, error) 
 	client := http.Client{
 		Timeout: c.timeout,
 	}
-
 	return client.Do(req)
 }
 
@@ -188,7 +217,7 @@ func (c *MulenpayClient) setReqHeaders(req *http.Request) {
 }
 
 func createSign(data *PaymentReq, secretKey string) string {
-	str := data.Currency + data.Amount + string(data.ShopId) + secretKey
+	str := data.Currency + fmt.Sprintf("%v", data.Amount) + string(data.ShopId) + secretKey
 	h := sha1.New()
 	h.Write([]byte(str))
 	return hex.EncodeToString(h.Sum(nil))
